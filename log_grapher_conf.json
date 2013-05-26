@@ -1,0 +1,15 @@
+{
+	"url": "C:\\Users\\Tim Hawkins\\AppData\\Roaming\\Macromedia\\Flash Player\\Logs\\flashlog.txt",
+	"filters": [
+		{
+			"regex": "memBytesUsed=(\\d*) memBytesHigh=(\\d*) memBytesLimit=(\\d*)",
+			"groups": [1,2,3],
+			"labels": ["memBytesUsed","memBytesHigh","memBytesLimit"]
+		},
+		{
+			"regex": "gfxBytesUsed=(\\d*) gfxBytesHigh=(\\d*) gfxBytesLimit=(\\d*) gfxNumPlanes=(\\d*)",
+			"groups": [1,2,3,4],
+			"labels": ["gfxBytesUsed","gfxBytesHigh","gfxBytesLimit","gfxNumPlanes"]
+		}
+	]
+}

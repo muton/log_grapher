@@ -1,4 +1,4 @@
-import tkinter as tk, time, subprocess, csv, re, time, matplotlib, sys, random, numpy
+import tkinter as tk, time, subprocess, csv, re, time, matplotlib, sys, random, numpy, json
 matplotlib.use( "TkAgg" )
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
@@ -6,6 +6,10 @@ from pprint import pprint
 from tkinter.constants import *
 from threading import Thread
 from queue import Queue, Empty
+
+conf_file_name = "log_grapher_conf.json"
+if len( sys.argv ) > 1:
+	conf_file_name = sys.argv[1]
 
 class LogReader:
 	"""
@@ -134,17 +138,15 @@ class Gui:
 		self.canvas.draw()
 
 
-filters = [
-	GraphDataFilter( r"memBytesUsed=(\d*) memBytesHigh=(\d*) memBytesLimit=(\d*)", 
-		[1,2,3], ["memBytesUsed","memBytesHigh","memBytesLimit"] ),
-	GraphDataFilter( r"gfxBytesUsed=(\d*) gfxBytesHigh=(\d*) gfxBytesLimit=(\d*) gfxNumPlanes=(\d*)", 
-		[1,2,3,4], ["gfxBytesUsed","gfxBytesHigh","gfxBytesLimit","gfxNumPlanes"] )
-]
+with open( conf_file_name ) as conf_file:    
+    conf = json.load( conf_file )
+pprint(conf)
 
-url = r'C:\Users\Tim Hawkins\AppData\Roaming\Macromedia\Flash Player\Logs\flashlog.txt'
-displayStr = ""
+filters = []
+for fltObj in conf["filters"]:
+	filters.append( GraphDataFilter( fltObj["regex"], fltObj["groups"], fltObj["labels"] ) )
 
-reader = LogReader( url )
+reader = LogReader( conf["url"] )
 model = GraphModel()
 
 labelList = []

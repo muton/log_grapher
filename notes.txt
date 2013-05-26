@@ -8,3 +8,10 @@ plt.plot([1.6, 2.7])
 plt.title("interactive test")
 plt.xlabel("index")
 
+
+
+
+
+Figure
+  subplot:Axes
+  subplot:Axes
