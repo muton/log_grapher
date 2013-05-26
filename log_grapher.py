@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import tkinter as tk, time, subprocess, csv, re, time, matplotlib, sys, random, numpy, json
 matplotlib.use( "TkAgg" )
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
