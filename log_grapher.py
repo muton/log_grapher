@@ -1,4 +1,7 @@
-import tkinter as t, time, subprocess, csv, re, time
+import tkinter as tk, time, subprocess, csv, re, time, matplotlib, sys, random, numpy
+matplotlib.use( "TkAgg" )
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+from matplotlib.figure import Figure
 from pprint import pprint
 from tkinter.constants import *
 from threading import Thread
@@ -38,6 +41,7 @@ class GraphModel:
 		self.rows = []
 		self.labels = ["time"]
 		self.numCols = 0
+		self.rowsSentToGui = 0
 
 	def setLabels( self, labelList ):
 		self.labels = ["time"] + labelList
@@ -56,7 +60,14 @@ class GraphModel:
 			row[0] = elapsedTime;
 			self.rows.append( row )
 		for idx, val in enumerate( labelList ):
-			row[self.labels.index(val)] = valueList[idx] 
+			row[self.labels.index(val)] = float( valueList[idx] ) 
+
+	def updateGui( self, gui ):
+		for idx in range( self.rowsSentToGui, len( self.rows ) ):
+			row = self.rows[idx]
+			gui.append( row[0], row[1:] )
+		self.rowsSentToGui = len( self.rows )
+		gui.update()
 
 	def writeCsv( self, csvPath ):
 		with open( csvPath, 'w', newline='') as csvfile:
@@ -81,6 +92,47 @@ class GraphDataFilter:
 				vals[idx] = match.group( val )
 			graphModel.add( time, self.fieldNameList, vals )
 
+class Gui:
+	def __init__( self ):
+		self.root = tk.Tk()
+		self.root.wm_title( "Log grapher" )
+		matplotlib.rc('font', size=8 )
+		self.fig = Figure( figsize=(11,5), dpi=100 )
+		self.fig.set_tight_layout( True )
+		self.axis = self.fig.add_subplot( 111 )
+		self.axis.set_title( 'Graph' )
+		self.axis.set_xlabel( 'X axis label' )
+		self.axis.set_ylabel( 'Y label' )
+		self.canvas = FigureCanvasTkAgg( self.fig, master=self.root )
+		self.canvas.show()
+		self.canvas.get_tk_widget().pack( side=TOP, fill=BOTH, expand=1 )
+
+	def setLabels( self, labelList ):
+		"""setLabels before doing anything else - configures axes etc"""
+		self.labels = labelList
+		for i in range( 0, len( labelList ) ):
+			self.axis.plot( [] )
+		self.fig.legend( self.axis.lines, self.labels, 'lower center', ncol=len(self.labels), 
+			borderpad=0.3, handletextpad=0.2, columnspacing=0.3 )
+
+	def append( self, xVal, yValList ):
+		"""
+		yValList must be the same length as labelList, None values will be ignored.
+		Call update() afterwards.
+		"""
+		#print( "gui append " + str( xVal ) + ", " )
+		#pprint( yValList )
+		for idx, yVal in enumerate( yValList ):
+			if yVal is not None:
+				hl = self.axis.lines[idx]
+				hl.set_xdata( numpy.append( hl.get_xdata(), xVal ) )
+				hl.set_ydata( numpy.append( hl.get_ydata(), yVal ) )
+
+	def update( self ):
+		self.axis.relim()
+		self.axis.autoscale_view()
+		self.canvas.draw()
+
 
 filters = [
 	GraphDataFilter( r"memBytesUsed=(\d*) memBytesHigh=(\d*) memBytesLimit=(\d*)", 
@@ -92,18 +144,6 @@ filters = [
 url = r'C:\Users\Tim Hawkins\AppData\Roaming\Macromedia\Flash Player\Logs\flashlog.txt'
 displayStr = ""
 
-root = t.Tk()
-root.geometry( "500x500" )
-
-frame = t.Frame( root, width=100, height=100 )
-frame.pack( expand=1, fill=BOTH )
-
-label = t.Label( frame, text="Hello World!", anchor=NW )
-label.pack( expand=1, fill=BOTH )
-
-quitBtn = t.Button( frame, text="Quit", command=frame.quit )
-quitBtn.pack( side=RIGHT )
-
 reader = LogReader( url )
 model = GraphModel()
 
@@ -113,24 +153,20 @@ model.setLabels( labelList )
 
 startTime = time.time()
 
+gui = Gui()
+gui.setLabels( labelList )
+
 def periodicFunc():
-	global displayStr, filters, model
-	#now = time.strftime( "%H:%M:%S" )
-	#displayStr += time.strftime( "%H:%M:%S" ) + "\n"
-	#while True:
+	global filters, model, gui
 	elapsedTime = int( time.time() - startTime )
 	line = reader.get_line()
 	while line is not None:
 		for flt in filters: flt.processLine( line, elapsedTime, model )
-		displayStr += line
 		line = reader.get_line()
+	#model.writeCsv( "output.csv" )
+	model.updateGui( gui )
+	gui.root.after( 1000, periodicFunc )
 
-	#if line is None: break
-	#displayStr += line + "\n" 
-	label.configure( text=displayStr )
-	model.writeCsv( "output.csv" )
-	root.after( 1000, periodicFunc )
+gui.root.after( 1000, periodicFunc )
 
-root.after( 1000, periodicFunc )
-
-root.mainloop()
+tk.mainloop()
