@@ -20,7 +20,8 @@ class LogReader:
 		needs set CYGWIN=nodosfilewarning environment variable
 	"""
 	def __init__(self, filePath):
-		self.proc = subprocess.Popen( ["tail", "-F", filePath], stdout=subprocess.PIPE, universal_newlines=True )
+		self.proc = subprocess.Popen( ["tail", "--sleep-interval=0.25", "-F", filePath], 
+			stdout=subprocess.PIPE, universal_newlines=True )
 		self.queue = Queue()
 		self.thread = Thread( target=self.enqueue_output, args=( self.proc.stdout, self.queue ) )
 		self.thread.daemon = True
@@ -140,7 +141,6 @@ class Gui:
 
 with open( conf_file_name ) as conf_file:    
     conf = json.load( conf_file )
-pprint(conf)
 
 filters = []
 for fltObj in conf["filters"]:
@@ -158,17 +158,21 @@ startTime = time.time()
 gui = Gui()
 gui.setLabels( labelList )
 
+pollCount = 0
+
 def periodicFunc():
-	global filters, model, gui
-	elapsedTime = int( time.time() - startTime )
+	global filters, model, gui, pollCount
+	pollCount += 1
+	elapsedTime = time.time() - startTime
 	line = reader.get_line()
 	while line is not None:
 		for flt in filters: flt.processLine( line, elapsedTime, model )
 		line = reader.get_line()
 	#model.writeCsv( "output.csv" )
-	model.updateGui( gui )
-	gui.root.after( 1000, periodicFunc )
+	if pollCount % 4 == 0:
+		model.updateGui( gui )
+	gui.root.after( 250, periodicFunc )
 
-gui.root.after( 1000, periodicFunc )
+gui.root.after( 250, periodicFunc )
 
 tk.mainloop()
