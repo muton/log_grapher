@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+##############################################################
+##  tim@muton.co.uk  #  http://github.com/muton/log_grapher ##
+##############################################################
+
+
 import tkinter as tk, time, subprocess, csv, re, time, matplotlib, sys, random, numpy, json
 matplotlib.use( "TkAgg" )
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
@@ -11,8 +16,8 @@ from queue import Queue, Empty
 
 conf_file_name = "log_grapher_conf.json"
 if len( sys.argv ) > 1:
-	conf_file_name = sys.argv[1]
-
+	conf_file_name = sys.argv[1]	
+	
 class LogReader:
 	"""
 	Tails a log file and allows lines to be retreived 
@@ -92,7 +97,6 @@ class GraphDataFilter:
 
 	def processLine( self, line, time, graphModel ):
 		match = self.regex.search( line )
-		pprint( line )
 		if ( match != None ):
 			vals = len( self.captureGroupList ) * [None]
 			for idx, val in enumerate( self.captureGroupList ):
@@ -148,6 +152,8 @@ filters = []
 for fltObj in conf["filters"]:
 	filters.append( GraphDataFilter( fltObj["regex"], fltObj["groups"], fltObj["labels"] ) )
 
+csvPath = conf["csv"]
+
 reader = LogReader( conf["url"] )
 model = GraphModel()
 
@@ -170,9 +176,10 @@ def periodicFunc():
 	while line is not None:
 		for flt in filters: flt.processLine( line, elapsedTime, model )
 		line = reader.get_line()
-	#model.writeCsv( "output.csv" )
-	if pollCount % 4 == 0:
+	if pollCount % 4 == 0:				# every 1 sec, update graph
 		model.updateGui( gui )
+	if ( pollCount % 40 == 0 ):			# every 10 secs, output csv
+		model.writeCsv( csvPath )
 	gui.root.after( 250, periodicFunc )
 
 gui.root.after( 250, periodicFunc )

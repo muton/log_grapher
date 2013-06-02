@@ -1,5 +1,6 @@
 {
 	"url": "C:\\Users\\Tim Hawkins\\AppData\\Roaming\\Macromedia\\Flash Player\\Logs\\flashlog.txt",
+	"csv": "flashlog_memory.csv",
 	"filters": [
 		{
 			"regex": "memBytesUsed=(\\d*) memBytesHigh=(\\d*) memBytesLimit=(\\d*)",
