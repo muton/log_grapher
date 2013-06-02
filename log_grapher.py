@@ -157,7 +157,7 @@ for fltObj in conf["filters"]:
 
 csvPath = conf["csv"]
 
-reader = LogReader( conf["url"] )
+reader = LogReader( conf["path"] )
 model = GraphModel()
 
 labelList = []
