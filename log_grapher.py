@@ -47,6 +47,9 @@ class LogReader:
 			pass
 		return line
 
+	def kill( self ):
+		self.proc.terminate()
+
 
 class GraphModel:
 	def __init__( self ):
@@ -169,7 +172,7 @@ gui.setLabels( labelList )
 pollCount = 0
 
 def periodicFunc():
-	global filters, model, gui, pollCount
+	global pollCount
 	pollCount += 1
 	elapsedTime = time.time() - startTime
 	line = reader.get_line()
@@ -183,5 +186,11 @@ def periodicFunc():
 	gui.root.after( 250, periodicFunc )
 
 gui.root.after( 250, periodicFunc )
+
+def onCloseWin():
+	reader.kill()
+	gui.root.destroy()
+
+gui.root.protocol( 'WM_DELETE_WINDOW', onCloseWin )
 
 tk.mainloop()
